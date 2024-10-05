@@ -1,0 +1,39 @@
+﻿@model SpaceDash.Models.GameSession
+
+@{
+    ViewData["Title"] = "Play Challenge";
+}
+
+<div class="card mt-5">
+    <div class="card-header text-center">
+        <h2>Challenge: @Model.CurrentChallenge.Type</h2>
+    </div>
+    <div class="card-body text-center">
+        @if (Model.CurrentChallenge.Type == "Trivia")
+        {
+            @foreach (var question in Model.CurrentChallenge.Questions)
+            {
+                <h4>@question.Text</h4>
+
+                <form asp-action="SubmitAnswer" method="post">
+                    <input type="hidden" name="sessionId" value="@Model.Id">
+
+                    <div class="list-group">
+                        @foreach (var answer in question.Answers)
+                        {
+                            <button type="submit" name="answerId" value="@answer.Id" class="list-group-item list-group-item-action">@answer.Text</button>
+                        }
+                    </div>
+                </form>
+            }
+        }
+        else if (Model.CurrentChallenge.Type == "Sudoku")
+        {
+            <p>This is a Sudoku challenge. (Sudoku puzzle UI goes here)</p>
+        }
+        else if (Model.CurrentChallenge.Type == "HighFive")
+        {
+            <p>Give @(Model.CurrentChallenge.RequiredHighFives ?? 0) high-fives to pass this challenge!</p>
+        }
+    </div>
+</div>

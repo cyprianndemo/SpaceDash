@@ -35,15 +35,9 @@
         }
 
         @@keyframes twinkle {
-            0% {
-                opacity: 0;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
         }
 
         .content {
@@ -65,28 +59,26 @@
             border-radius: 10px;
         }
 
-        .moving-earth {
+        .moving-earth, .moving-moon, .satellite {
             position: absolute;
+            border-radius: 50%;
+        }
+
+        .moving-earth {
             width: 100px;
             height: 100px;
             background: url('/images/earth.jpeg') no-repeat center/cover;
-            border-radius: 50%;
             animation: orbit-earth 10s infinite linear;
             top: 40%;
             left: 50%;
         }
 
         @@keyframes orbit-earth {
-            0% {
-                transform: rotate(0deg) translateX(200px) rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg) translateX(200px) rotate(-360deg);
-            }
+            0% { transform: rotate(0deg) translateX(200px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(200px) rotate(-360deg); }
         }
 
-        .moving-moon {
-            position: absolute;
+        .moon {
             width: 80px;
             height: 80px;
             background: url('/images/moon.jpeg') no-repeat center/cover;
@@ -96,16 +88,11 @@
         }
 
         @@keyframes orbit-moon {
-            0% {
-                transform: rotate(0deg) translateX(250px) rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg) translateX(250px) rotate(-360deg);
-            }
+            0% { transform: rotate(0deg) translateX(250px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(250px) rotate(-360deg); }
         }
 
         .satellite {
-            position: absolute;
             width: 80px;
             height: 80px;
             background: url('/images/satelite.jpg') no-repeat center/cover;
@@ -115,12 +102,8 @@
         }
 
         @@keyframes orbit-satellite {
-            0% {
-                transform: rotate(0deg) translateX(250px) rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg) translateX(250px) rotate(-360deg);
-            }
+            0% { transform: rotate(0deg) translateX(250px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(250px) rotate(-360deg); }
         }
 
         .game-cards {
@@ -151,11 +134,14 @@
 </head>
 <body>
     <div class="stars" id="stars"></div>
-    <div class="moving-earth"></div> <!-- Added moving-earth element -->
-    <div class="moving-moon"></div>
+    <div class="moving-earth"></div>
+    <div class="moon"></div>
     <div class="satellite"></div>
+
     <div class="content container">
-        <h1 class="text-warning">Galactic Games: Space Trivia</h1>
+        <h1 class="text-warning">Galactic Games: Space Dash</h1>
+        
+        <!-- Form to create a team -->
         <form asp-action="CreateTeam" method="post" class="mt-4">
             <div class="mb-3">
                 <label for="teamName" class="form-label">Team Name:</label>
@@ -164,6 +150,7 @@
             <button type="submit" class="btn btn-warning">Start Game</button>
         </form>
 
+        <!-- Game cards -->
         <div class="row game-cards mt-5">
             <div class="col-md-4">
                 <div class="card">
@@ -193,20 +180,34 @@
     </div>
 
     <script>
-        function createStars() {
-            const stars = document.getElementById('stars');
-            for (let i = 0; i < 200; i++) {
+        document.addEventListener('DOMContentLoaded', function () {
+            const starsContainer = document.querySelector('#stars');
+
+            // Create stars
+            for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
-                star.className = 'star';
-                star.style.width = `${Math.random() * 3}px`;
-                star.style.height = star.style.width;
+                star.classList.add('star');
                 star.style.left = `${Math.random() * 100}%`;
                 star.style.top = `${Math.random() * 100}%`;
-                star.style.animationDelay = `${Math.random() * 5}s`;
-                stars.appendChild(star);
+                star.style.width = `${Math.random() * 3}px`;
+                star.style.height = star.style.width;
+                starsContainer.appendChild(star);
             }
-        }
-        createStars();
+
+            // Create planets
+            const planetColors = ['#ff9800', '#4caf50', '#2196f3'];
+            for (let i = 0; i < 3; i++) {
+                const planet = document.createElement('div');
+                planet.classList.add('planet');
+                planet.style.position = 'absolute';
+                planet.style.left = `${Math.random() * 80 + 10}%`;
+                planet.style.top = `${Math.random() * 80 + 10}%`;
+                planet.style.width = `${Math.random() * 30 + 20}px`;
+                planet.style.height = planet.style.width;
+                planet.style.backgroundColor = planetColors[i];
+                starsContainer.appendChild(planet);
+            }
+        });
     </script>
 
     <!-- Bootstrap JS -->

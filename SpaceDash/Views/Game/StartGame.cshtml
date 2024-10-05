@@ -1,0 +1,18 @@
+﻿@model SpaceDash.Models.Team
+@{
+    ViewData["Title"] = "Start Game";
+}
+<div class="container mt-5">
+    <div class="card mx-auto text-center shadow-lg" style="width: 40rem;">
+        <div class="card-header bg-primary text-white">
+            <h2>Starting Game for Team @Model.Name</h2>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Preparing your space adventure...</p>
+            <form asp-controller="Game" asp-action="InitiateGame" method="post">
+                <input type="hidden" name="teamId" value="@Model.Id" />
+                <button type="submit" class="btn btn-success">Launch Mission</button>
+            </form>
+        </div>
+    </div>
+</div>

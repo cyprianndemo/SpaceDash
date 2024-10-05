@@ -1,0 +1,41 @@
+﻿@model SpaceDash.Models.GameSession
+
+@{
+    ViewData["Title"] = "HighFive Challenge";
+}
+
+<div class="card mt-5">
+    <div class="card-header text-center">
+        <h2>HighFive Challenge</h2>
+        <p>Give @Model.CurrentChallenge.RequiredHighFives high-fives to complete the challenge!</p>
+    </div>
+    <div class="card-body text-center">
+        <h4 id="highFiveCount">High-fives: 0</h4>
+        <button class="btn btn-warning mt-3" id="highFiveButton">Give HighFive!</button>
+
+        <form asp-action="SubmitHighFive" method="post" class="mt-3">
+            <input type="hidden" name="sessionId" value="@Model.Id">
+            <input type="hidden" id="highFiveInput" name="highFiveCount" value="0">
+            <button type="submit" class="btn btn-success" id="submitHighFiveButton" disabled>Submit HighFive</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let highFiveCount = 0;
+    const requiredHighFives = @Model.CurrentChallenge.RequiredHighFives;
+    const highFiveButton = document.getElementById('highFiveButton');
+    const highFiveDisplay = document.getElementById('highFiveCount');
+    const highFiveInput = document.getElementById('highFiveInput');
+    const submitButton = document.getElementById('submitHighFiveButton');
+
+    highFiveButton.addEventListener('click', function () {
+        highFiveCount++;
+        highFiveDisplay.textContent = "High-fives: " + highFiveCount;
+        highFiveInput.value = highFiveCount;
+
+        if (highFiveCount >= requiredHighFives) {
+            submitButton.disabled = false;
+        }
+    });
+</script>

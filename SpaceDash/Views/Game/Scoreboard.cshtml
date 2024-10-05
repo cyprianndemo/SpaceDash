@@ -1,0 +1,30 @@
+﻿@model SpaceDash.Models.Team
+
+@{
+    ViewData["Title"] = "Team Scoreboard";
+}
+
+<h2 class="mt-5 text-center">Team: @Model.Name</h2>
+<div class="table-responsive mt-4">
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>Player Name</th>
+                <th>Score</th>
+                <th>Time Reward (Seconds)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var player in Model.Players)
+            {
+                <tr>
+                    <td>@player.Name</td>
+                    <td>@player.Score</td>
+                    <td>@player.TimeReward</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<a href="@Url.Action("Index", "Game")" class="btn btn-primary mt-4">Play Again</a>

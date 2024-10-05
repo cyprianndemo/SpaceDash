@@ -2,14 +2,11 @@
 
 namespace SpaceDash.Models
 {
-    public class Team
+    public class Device
     {
         public int Id { get; set; }
         [Required]
         public string Name { get; set; }
-        public string GamePin { get; set; }
-        public List<Player> Players { get; set; }
+        public string Location { get; set; }
     }
-    
 }
-
