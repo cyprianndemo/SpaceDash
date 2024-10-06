@@ -34,7 +34,7 @@ To install Space Dash, follow these steps:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/space-dash.git
+   git clone https://github.com/cyprianndemo/SpaceDash.git
    ```
 2. Navigate to the project directory:
    ```
