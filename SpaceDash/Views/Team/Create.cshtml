@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Team - SpaceDash</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            border-radius: 10px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+            .btn-primary:hover {
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card shadow">
+            <div class="card-header text-center">
+                <h2>Create Your SpaceDash Team</h2>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Team" asp-action="Create" method="post">
+                    <div class="form-group">
+                        <label for="teamName">Team Name:</label>
+                        <input type="text" class="form-control" id="teamName" name="teamName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gamePin">Game Pin (optional):</label>
+                        <input type="text" class="form-control" id="gamePin" name="gamePin">
+                        <small class="form-text text-muted">Leave blank to generate a random pin.</small>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Create Team</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

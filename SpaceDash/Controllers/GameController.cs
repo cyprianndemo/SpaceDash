@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpaceDash.Models;
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SpaceDash.Controllers
 {
@@ -11,232 +12,146 @@ namespace SpaceDash.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<GameController> _logger;
 
-
         public GameController(ApplicationDbContext context, ILogger<GameController> logger)
         {
             _context = context;
             _logger = logger;
-
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Lobby(int teamId)
         {
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult StartGame(int teamId)
-        {
-            _logger.LogInformation($"StartGame action called with teamId: {teamId}");
-            var team = _context.Teams.Find(teamId);
-            if (team == null)
-            {
-                _logger.LogWarning($"Team not found for ID: {teamId}");
-                return NotFound();
-            }
-            return View(team);
-        }
-
-        [HttpPost]
-        public IActionResult InitiateGame(int teamId)
-        {
-            _logger.LogInformation($"InitiateGame action called with teamId: {teamId}");
-            var team = _context.Teams.Find(teamId);
-            if (team == null)
-            {
-                _logger.LogWarning($"Team not found for ID: {teamId}");
-                return NotFound();
-            }
-
-            var firstChallenge = _context.Challenges.OrderBy(c => c.Order).FirstOrDefault();
-            if (firstChallenge == null)
-            {
-                _logger.LogWarning("No challenges found in the database");
-                return NotFound("No challenges found.");
-            }
-
-            var gameSession = new GameSession
-            {
-                TeamId = teamId,
-                Team = team,
-                CurrentChallengeId = firstChallenge.Id,
-                CurrentChallenge = firstChallenge,
-                StartTime = DateTime.Now
-            };
-
-            _context.GameSessions.Add(gameSession);
-            _context.SaveChanges();
-
-            _logger.LogInformation($"Game session created with ID: {gameSession.Id}");
-            return RedirectToAction("Play", new { sessionId = gameSession.Id });
-        }
-
-        public IActionResult Play(int sessionId)
-        {
-            var session = _context.GameSessions
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.Team)
                 .Include(gs => gs.CurrentChallenge)
-                .ThenInclude(c => c.Questions)
-                .ThenInclude(q => q.Answers)
-                .FirstOrDefault(gs => gs.Id == sessionId);
+                .FirstOrDefaultAsync(gs => gs.TeamId == teamId && !gs.IsCompleted);
 
-            if (session == null) return NotFound();
-
-            switch (session.CurrentChallenge.Type)
+            if (gameSession == null)
             {
-                case "Trivia":
-                    return View("Play", session);
+                return NotFound("No active game session found.");
+            }
+
+            return View(gameSession);
+        }
+
+        public async Task<IActionResult> Play(int sessionId)
+        {
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.CurrentChallenge)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+
+            if (gameSession == null)
+            {
+                return NotFound("Game session not found.");
+            }
+
+            if (gameSession.CurrentChallenge == null)
+            {
+                return RedirectToAction(nameof(NextChallenge), new { sessionId });
+            }
+
+            switch (gameSession.CurrentChallenge.Type)
+            {
                 case "Sudoku":
-                    return RedirectToAction("Sudoku", new { sessionId });
+                    return View("Sudoku", gameSession);
                 case "HighFive":
-                    return RedirectToAction("HighFive", new { sessionId });
+                    return View("HighFive", gameSession);
                 default:
-                    return NotFound();
+                    return NotFound("Unknown challenge type.");
             }
         }
 
-        // Submit answer for trivia challenges
         [HttpPost]
-        public IActionResult SubmitAnswer(int sessionId, int answerId)
+        public async Task<IActionResult> SubmitSudoku(int sessionId, string solution)
         {
-            var session = _context.GameSessions
+            var gameSession = await _context.GameSessions
                 .Include(gs => gs.CurrentChallenge)
-                .ThenInclude(c => c.Questions)
-                .FirstOrDefault(gs => gs.Id == sessionId);
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
 
-            if (session == null) return NotFound();
-
-            var correctAnswer = session.CurrentChallenge.Questions.FirstOrDefault()?.CorrectAnswerId;
-            if (correctAnswer == null) return NotFound("No correct answer found.");
-
-            if (answerId == correctAnswer)
+            if (gameSession == null || gameSession.CurrentChallenge.Type != "Sudoku")
             {
-                session.Score += 10;
-                session.TimeReward += 5;
-            }
-            else
-            {
-                session.TimeReward -= 5;
+                return NotFound();
             }
 
-            session.CurrentChallenge.IsCompleted = true;
-            _context.SaveChanges();
+            if (solution == gameSession.CurrentChallenge.Solution)
+            {
+                gameSession.Score += 100;
+                gameSession.TimeReward += 30;
+                gameSession.CurrentChallenge.IsCompleted = true;
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(NextChallenge), new { sessionId });
+            }
 
-            return RedirectToAction("NextChallenge", new { sessionId });
+            return View("Sudoku", gameSession);
         }
 
-        // Move to the next challenge
-        public IActionResult NextChallenge(int sessionId)
+        [HttpPost]
+        public async Task<IActionResult> SubmitHighFive(int sessionId)
         {
-            var session = _context.GameSessions
+            var gameSession = await _context.GameSessions
                 .Include(gs => gs.CurrentChallenge)
-                .FirstOrDefault(gs => gs.Id == sessionId);
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
 
-            if (session == null) return NotFound();
+            if (gameSession == null || gameSession.CurrentChallenge.Type != "HighFive")
+            {
+                return NotFound();
+            }
 
-            var nextChallenge = _context.Challenges
-                .Where(c => c.Order > session.CurrentChallenge.Order)
+            gameSession.CurrentChallenge.RequiredHighFives--;
+
+            if (gameSession.CurrentChallenge.RequiredHighFives <= 0)
+            {
+                gameSession.Score += 50;
+                gameSession.TimeReward += 15;
+                gameSession.CurrentChallenge.IsCompleted = true;
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(NextChallenge), new { sessionId });
+            }
+
+            await _context.SaveChangesAsync();
+            return View("HighFive", gameSession);
+        }
+
+        public async Task<IActionResult> NextChallenge(int sessionId)
+        {
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.Challenges)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+
+            if (gameSession == null)
+            {
+                return NotFound();
+            }
+
+            var nextChallenge = gameSession.Challenges
                 .OrderBy(c => c.Order)
-                .FirstOrDefault();
+                .FirstOrDefault(c => !c.IsCompleted);
 
             if (nextChallenge == null)
             {
-                // Game is finished, show scoreboard
-                return RedirectToAction("Scoreboard", new { teamId = session.TeamId });
+                gameSession.IsCompleted = true;
+                gameSession.EndTime = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(GameOver), new { sessionId });
             }
 
-            session.CurrentChallengeId = nextChallenge.Id;
-            _context.SaveChanges();
+            gameSession.CurrentChallengeId = nextChallenge.Id;
+            await _context.SaveChangesAsync();
 
-            return RedirectToAction("Play", new { sessionId });
+            return RedirectToAction(nameof(Play), new { sessionId });
         }
 
-        // Display Sudoku challenge
-        public IActionResult Sudoku(int sessionId)
+        public async Task<IActionResult> GameOver(int sessionId)
         {
-            var gameSession = _context.GameSessions
-                .Include(gs => gs.CurrentChallenge)
-                .FirstOrDefault(gs => gs.Id == sessionId);
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.Team)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
 
-            if (gameSession == null) return NotFound();
+            if (gameSession == null)
+            {
+                return NotFound();
+            }
 
             return View(gameSession);
-        }
-
-        [HttpPost]
-        public IActionResult SubmitSudoku(int sessionId, Dictionary<int, Dictionary<int, string>> cell)
-        {
-            var gameSession = _context.GameSessions
-                .Include(gs => gs.CurrentChallenge)
-                .FirstOrDefault(gs => gs.Id == sessionId);
-
-            if (gameSession == null) return NotFound();
-
-            bool isSolved = ValidateSudoku(cell);
-
-            if (isSolved)
-            {
-                gameSession.CurrentChallenge.IsCompleted = true;
-                gameSession.Score += 100;
-                _context.SaveChanges();
-                return RedirectToAction("NextChallenge", new { sessionId });
-            }
-            else
-            {
-                ViewData["Message"] = "Incorrect solution. Please try again!";
-                return View("Sudoku", gameSession);
-            }
-        }
-
-        public IActionResult HighFive(int sessionId)
-        {
-            var gameSession = _context.GameSessions
-                .Include(gs => gs.CurrentChallenge)
-                .FirstOrDefault(gs => gs.Id == sessionId);
-
-            if (gameSession == null) return NotFound();
-
-            return View(gameSession);
-        }
-
-        [HttpPost]
-        public IActionResult SubmitHighFive(int sessionId, int highFiveCount)
-        {
-            var gameSession = _context.GameSessions
-                .Include(gs => gs.CurrentChallenge)
-                .FirstOrDefault(gs => gs.Id == sessionId);
-
-            if (gameSession == null) return NotFound();
-
-            if (highFiveCount >= gameSession.CurrentChallenge.RequiredHighFives)
-            {
-                gameSession.CurrentChallenge.IsCompleted = true;
-                gameSession.Score += 50;
-                _context.SaveChanges();
-                return RedirectToAction("NextChallenge", new { sessionId });
-            }
-            else
-            {
-                ViewData["Message"] = "You didn't reach enough high-fives. Try again!";
-                return View("HighFive", gameSession);
-            }
-        }
-
-        private bool ValidateSudoku(Dictionary<int, Dictionary<int, string>> grid)
-        {
-            // Implement your Sudoku validation logic here
-            return true; // For now, assume it's always correct
-        }
-
-        // Display the scoreboard at the end of the game
-        public IActionResult Scoreboard(int teamId)
-        {
-            var team = _context.Teams
-                .Include(t => t.Players)
-                .FirstOrDefault(t => t.Id == teamId);
-
-            if (team == null) return NotFound();
-
-            return View(team);
         }
     }
 }

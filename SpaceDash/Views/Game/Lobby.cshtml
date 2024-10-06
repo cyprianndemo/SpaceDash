@@ -1,0 +1,19 @@
+﻿@model GameSession
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header text-center">
+            <h2>Welcome to SpaceDash!</h2>
+        </div>
+        <div class="card-body">
+            <h3>Team: @Model.Team.Name</h3>
+            <p>Game Pin: @Model.Team.GamePin</p>
+            <p>Current Challenge: @Model.CurrentChallenge.Type</p>
+            <p>Score: @Model.Score</p>
+            <p>Time Reward: @Model.TimeReward seconds</p>
+            <div class="text-center mt-4">
+                <a asp-controller="Game" asp-action="Play" asp-route-sessionId="@Model.Id" class="btn btn-primary btn-lg">Start Playing</a>
+            </div>
+        </div>
+    </div>
+</div>

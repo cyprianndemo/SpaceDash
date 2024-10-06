@@ -1,31 +1,23 @@
-﻿@model SpaceDash.Models.GameSession
+﻿@model GameSession
 
-@{
-    ViewData["Title"] = "Sudoku Challenge";
+<h2>Sudoku Challenge</h2>
+
+@if (Model.CurrentChallenge != null && Model.CurrentChallenge.Type == "Sudoku")
+{
+    <h3>Solve the Sudoku puzzle:</h3>
+
+    <div>
+        <!-- Display the Sudoku puzzle here -->
+        @Model.CurrentChallenge.SudokuPuzzle
+    </div>
+
+    <form asp-action="SubmitSudoku" method="post">
+        <input type="hidden" name="sessionId" value="@Model.Id" />
+        <textarea name="solution" rows="9" cols="9" placeholder="Enter your solution here"></textarea>
+        <button type="submit">Submit Solution</button>
+    </form>
 }
-
-<div class="card mt-5">
-    <div class="card-header text-center">
-        <h2>Sudoku Challenge</h2>
-        <p>Fill in the grid to solve the Sudoku puzzle.</p>
-    </div>
-    <div class="card-body text-center">
-        <form asp-action="SubmitSudoku" method="post">
-            <input type="hidden" name="sessionId" value="@Model.Id">
-            <div class="container">
-                <div class="row">
-                    @for (int i = 0; i < 6; i++)
-                    {
-                        <div class="col">
-                            @for (int j = 0; j < 6; j++)
-                            {
-                                <input type="text" name="cell[@i][@j]" class="form-control mb-2" maxlength="1" style="width: 50px; display: inline-block; text-align: center;" />
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-            <button type="submit" class="btn btn-success mt-4">Submit Sudoku</button>
-        </form>
-    </div>
-</div>
+else
+{
+    <p>Error: Current challenge is not a Sudoku challenge.</p>
+}

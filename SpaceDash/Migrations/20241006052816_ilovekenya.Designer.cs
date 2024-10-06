@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SpaceDash.Models;
@@ -11,9 +12,11 @@ using SpaceDash.Models;
 namespace SpaceDash.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241006052816_ilovekenya")]
+    partial class ilovekenya
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,56 +24,6 @@ namespace SpaceDash.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Challenge", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GameSessionId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("RequiredHighFives")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Solution")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SudokuPuzzle")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DeviceId");
-
-                    b.HasIndex("GameSessionId");
-
-                    b.ToTable("Challenges");
-                });
 
             modelBuilder.Entity("SpaceDash.Models.Answer", b =>
                 {
@@ -92,6 +45,50 @@ namespace SpaceDash.Migrations
                     b.HasIndex("QuestionId");
 
                     b.ToTable("Answers");
+                });
+
+            modelBuilder.Entity("SpaceDash.Models.Challenge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GameSessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RequiredHighFives")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("GameSessionId");
+
+                    b.ToTable("Challenges");
                 });
 
             modelBuilder.Entity("SpaceDash.Models.Device", b =>
@@ -123,7 +120,7 @@ namespace SpaceDash.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CurrentChallengeId")
+                    b.Property<int>("CurrentChallengeId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("EndTime")
@@ -135,7 +132,7 @@ namespace SpaceDash.Migrations
                     b.Property<int>("Score")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("StartTime")
+                    b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TeamId")
@@ -227,25 +224,6 @@ namespace SpaceDash.Migrations
                     b.ToTable("Teams");
                 });
 
-            modelBuilder.Entity("Challenge", b =>
-                {
-                    b.HasOne("SpaceDash.Models.Device", "Device")
-                        .WithMany()
-                        .HasForeignKey("DeviceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SpaceDash.Models.GameSession", "GameSession")
-                        .WithMany("Challenges")
-                        .HasForeignKey("GameSessionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Device");
-
-                    b.Navigation("GameSession");
-                });
-
             modelBuilder.Entity("SpaceDash.Models.Answer", b =>
                 {
                     b.HasOne("SpaceDash.Models.Question", "Question")
@@ -257,12 +235,28 @@ namespace SpaceDash.Migrations
                     b.Navigation("Question");
                 });
 
+            modelBuilder.Entity("SpaceDash.Models.Challenge", b =>
+                {
+                    b.HasOne("SpaceDash.Models.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.HasOne("SpaceDash.Models.GameSession", null)
+                        .WithMany("Challenges")
+                        .HasForeignKey("GameSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+                });
+
             modelBuilder.Entity("SpaceDash.Models.GameSession", b =>
                 {
-                    b.HasOne("Challenge", "CurrentChallenge")
+                    b.HasOne("SpaceDash.Models.Challenge", "CurrentChallenge")
                         .WithMany()
                         .HasForeignKey("CurrentChallengeId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SpaceDash.Models.Team", "Team")
                         .WithMany()
@@ -288,7 +282,7 @@ namespace SpaceDash.Migrations
 
             modelBuilder.Entity("SpaceDash.Models.Question", b =>
                 {
-                    b.HasOne("Challenge", "Challenge")
+                    b.HasOne("SpaceDash.Models.Challenge", "Challenge")
                         .WithMany("Questions")
                         .HasForeignKey("ChallengeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -297,7 +291,7 @@ namespace SpaceDash.Migrations
                     b.Navigation("Challenge");
                 });
 
-            modelBuilder.Entity("Challenge", b =>
+            modelBuilder.Entity("SpaceDash.Models.Challenge", b =>
                 {
                     b.Navigation("Questions");
                 });
