@@ -1,5 +1,4 @@
-﻿@model SpaceDash.Models.Team
-@{
+﻿@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -8,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Games: Space Trivia - The Sun Touches Everything</title>
+    <title>Galactic Games: Space Trivia</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -36,9 +35,17 @@
         }
 
         @@keyframes twinkle {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
+            0% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
         }
 
         .content {
@@ -51,7 +58,6 @@
         h1 {
             font-size: 3em;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 8px #ff9800; /* Sunlit effect */
         }
 
         form {
@@ -59,10 +65,9 @@
             background-color: rgba(255, 255, 255, 0.1);
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(255, 153, 0, 0.8); /* Solar glow */
         }
 
-        .moving-earth, .moving-moon, .satellite {
+        .moving-earth, .moon, .satellite {
             position: absolute;
             border-radius: 50%;
         }
@@ -70,43 +75,84 @@
         .moving-earth {
             width: 100px;
             height: 100px;
-            background: url('/images/earth.jpeg') no-repeat center/cover;
+            background: url('/images/earth3.png') no-repeat center/cover;
             animation: orbit-earth 10s infinite linear;
-            top: 40%;
+            top: 50%;
             left: 50%;
+            transform-origin: -200px center; /* Adjusted for rotation around the sun */
         }
 
         @@keyframes orbit-earth {
-            0% { transform: rotate(0deg) translateX(200px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(200px) rotate(-360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .moon {
-            width: 80px;
-            height: 80px;
-            background: url('/images/moon.jpeg') no-repeat center/cover;
+            width: 60px; /* Reduced size for moon */
+            height: 60px; /* Reduced size for moon */
+            background: url('/images/moon2.png') no-repeat center/cover;
             animation: orbit-moon 15s infinite linear;
-            top: 30%;
+            top: 50%;
             left: 50%;
+            transform-origin: -150px center; /* Adjusted for rotation around the sun */
         }
 
         @@keyframes orbit-moon {
-            0% { transform: rotate(0deg) translateX(250px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(250px) rotate(-360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .satellite {
-            width: 80px;
-            height: 80px;
-            background: url('/images/satelite.jpg') no-repeat center/cover;
+            width: 70px; /* Adjusted size for satellite */
+            height: 70px; /* Adjusted size for satellite */
+            background: url('/images/satellite.jpg') no-repeat center/cover;
             animation: orbit-satellite 15s infinite linear;
-            top: 30%;
+            top: 50%;
             left: 50%;
+            transform-origin: -250px center; /* Adjusted for rotation around the sun */
         }
 
         @@keyframes orbit-satellite {
-            0% { transform: rotate(0deg) translateX(250px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(250px) rotate(-360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Rotating sun in the center */
+        .rotating-sun {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 600px; /* Increased size of the sun */
+            height: 600px; /* Increased size of the sun */
+            background: url('/images/sun2.png') no-repeat center/cover; /* Replace with your sun image */
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: rotate-sun 10s infinite linear;
+        }
+
+        @@keyframes rotate-sun {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         .game-cards {
@@ -116,7 +162,6 @@
         .card {
             background-color: rgba(255, 255, 255, 0.1);
             border: none;
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.8); /* Solar energy */
         }
 
         .card-body {
@@ -127,45 +172,38 @@
         }
 
         .card-title {
-            color: #ffeb3b; /* Sun-inspired color */
+            color: #fff;
             font-size: 1.5em;
         }
 
         .card-text {
             color: #ddd;
         }
-
-        .solar-glow {
-            color: #ff9800;
-            text-shadow: 1px 1px 5px #ffeb3b;
-        }
     </style>
 </head>
 <body>
     <div class="stars" id="stars"></div>
+    <div class="rotating-sun"></div>
     <div class="moving-earth"></div>
     <div class="moon"></div>
     <div class="satellite"></div>
 
     <div class="content container">
-        <h1 class="text-warning solar-glow">Galactic Games: Space Dash</h1>
-        
+        <h1 class="text-warning">Galactic Games: Space Dash</h1>
+
         <!-- Form to create a team -->
-        <form asp-controller="Team" asp-action="CreateTeam" method="post" class="mt-4">
-            <div class="mb-3">
-                <label for="teamName" class="form-label">Team Name:</label>
-                <input type="text" id="teamName" name="Name" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-warning">Start Game</button>
+        <form class="mt-4">
+            
+            <button type="submit" asp-controller="Team" asp-action="Create" class="btn btn-warning">Start Game</button>
         </form>
 
-        <!-- Game cards with solar-powered challenges -->
+        <!-- Game cards -->
         <div class="row game-cards mt-5">
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Explore the Universe</h5>
-                        <p class="card-text">Test your knowledge about stars, planets, and galaxies. Collect <span class="solar-glow">solar energy points</span> as you complete each challenge!</p>
+                        <p class="card-text">Test your knowledge about stars, planets, and galaxies. Do you have what it takes to become a space trivia master?</p>
                     </div>
                 </div>
             </div>
@@ -173,7 +211,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Challenge Other Teams</h5>
-                        <p class="card-text">Invite your friends to form teams and compete in solar-powered space challenges. Are you ready for an interstellar battle?</p>
+                        <p class="card-text">Invite your friends to form teams and compete with each other in an epic interstellar battle of wits!</p>
                     </div>
                 </div>
             </div>
@@ -181,7 +219,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Win Galactic Rewards</h5>
-                        <p class="card-text">Score the highest and claim rewards that are powered by the sun itself, fit for any space explorer!</p>
+                        <p class="card-text">Score the highest in the trivia and earn rewards fit for a space explorer!</p>
                     </div>
                 </div>
             </div>
@@ -196,24 +234,25 @@
             for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
                 star.classList.add('star');
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.width = `${Math.random() * 3}px`;
+                star.style.left = ${ Math.random() * 100 }%;
+                star.style.top = ${ Math.random() * 100 }%;
+                star.style.width = ${ Math.random() * 3 } px;
                 star.style.height = star.style.width;
                 starsContainer.appendChild(star);
             }
 
             // Create planets
-            const planetColors = ['#ff9800', '#4caf50', '#2196f3'];
+            const planetColors = ['#D3D3D3', '#8B0000', '#00008B'];
             for (let i = 0; i < 3; i++) {
                 const planet = document.createElement('div');
                 planet.classList.add('planet');
                 planet.style.position = 'absolute';
-                planet.style.left = `${Math.random() * 80 + 10}%`;
-                planet.style.top = `${Math.random() * 80 + 10}%`;
-                planet.style.width = `${Math.random() * 30 + 20}px`;
+                planet.style.left = ${ Math.random() * 80 + 10 }%;
+                planet.style.top = ${ Math.random() * 80 + 10 }%;
+                planet.style.width = ${ Math.random() * 30 + 20 } px;
                 planet.style.height = planet.style.width;
                 planet.style.backgroundColor = planetColors[i];
+                planet.style.borderRadius = '50%';
                 starsContainer.appendChild(planet);
             }
         });

@@ -4,6 +4,79 @@
     ViewData["Title"] = "HighFive Challenge";
 }
 
+<style>
+    body {
+        background-color: #000000; /* Black background to simulate night */
+        color: white;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 3px solid #fff;
+        border-radius: 10px;
+        padding: 20px;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .sun {
+        position: absolute;
+        bottom: 50px; /* Positioning the sun lower as if it’s setting */
+        left: 50px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, #ffff00, #ff8c00);
+        border-radius: 50%;
+        box-shadow: 0 0 50px #ffff00;
+    }
+
+    /* Stars */
+    .star {
+        position: absolute;
+        background-color: white;
+        border-radius: 50%;
+        animation: twinkle 1s infinite alternate;
+    }
+
+    @@keyframes twinkle {
+        0% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Shooting star */
+    .shooting-star {
+        position: absolute;
+        width: 2px;
+        height: 50px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%);
+        transform: rotate(-45deg);
+        animation: shoot 2s linear infinite;
+        opacity: 0;
+    }
+
+    @@keyframes shoot {
+        0% {
+            transform: translateX(0) translateY(0) rotate(-45deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(-500px) translateY(500px) rotate(-45deg);
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="sun"></div>
+
 <div class="card mt-5">
     <div class="card-header text-center">
         <h2>HighFive Challenge</h2>
@@ -38,4 +111,32 @@
             submitButton.disabled = false;
         }
     });
+
+    // Space background elements
+    function createStars() {
+        for (let i = 0; i < 50; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = `${Math.random() * 3 + 1}px`;
+            star.style.height = star.style.width;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.left = `${Math.random() * 100}%`;
+            document.body.appendChild(star);
+        }
+    }
+
+    function createShootingStar() {
+        const shootingStar = document.createElement('div');
+        shootingStar.className = 'shooting-star';
+        shootingStar.style.top = `${Math.random() * 50}%`;
+        shootingStar.style.left = '100%';
+        document.body.appendChild(shootingStar);
+
+        setTimeout(() => {
+            shootingStar.remove();
+        }, 2000);
+    }
+
+    createStars();
+    setInterval(createShootingStar, 30000);
 </script>

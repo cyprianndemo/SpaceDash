@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Dash - Game Over</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        .space-background {
+            background-color: #000033;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+                radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+            background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+            background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+            animation: space-animation 200s linear infinite;
+        }
+        @@keyframes space-animation {
+            from { background-position: 0 0, 40px 60px, 130px 270px, 70px 100px; }
+            to { background-position: 550px 550px, 390px 410px, 380px 520px, 220px 250px; }
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+        }
+        h2 {
+            color: #ffffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+        }
+        .card-header {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-bottom: none;
+        }
+        .btn-danger {
+            background-color: #ff4757;
+            border-color: #ff4757;
+        }
+        .btn-primary {
+            background-color: #3742fa;
+            border-color: #3742fa;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s;
+        }
+    </style>
+</head>
+<body class="space-background">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <!-- Game Over Title -->
+                <h2 class="text-center mb-4">Game Over!</h2>
+                <!-- Score Card -->
+                <div class="card text-white mb-3">
+                    <div class="card-header text-center">Your Score</div>
+                    <div class="card-body">
+                        <h4 class="card-title text-center">@Model.Score</h4>
+                    </div>
+                </div>
+                <!-- Time Taken Card -->
+                <div class="card text-white mb-3">
+                    <div class="card-header text-center">Time Taken</div>
+                    <div class="card-body">
+                        <h4 class="card-title text-center">@Model.TimeTaken</h4>
+                    </div>
+                </div>
+                <form class="d-grid gap-2 mb-3">
+                    <button type="submit" asp-controller="Team" asp-action="Create" class="btn btn-danger btn-lg">Play Again</button>
+                </form>
+                <form class="d-grid gap-2">
+                    <button type="submit" asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">Return to Main Menu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

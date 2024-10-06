@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Play Challenge";
+    var questionIndex = ViewBag.QuestionIndex ?? 0;
+    var currentQuestion = Model.CurrentChallenge.Type == "Trivia" ? Model.CurrentChallenge.Questions[questionIndex] : null;
+    var startTime = ViewBag.StartTime;
 }
 
 <div class="card mt-5">
@@ -11,29 +14,53 @@
     <div class="card-body text-center">
         @if (Model.CurrentChallenge.Type == "Trivia")
         {
-            @foreach (var question in Model.CurrentChallenge.Questions)
-            {
-                <h4>@question.Text</h4>
+            <!-- Trivia Challenge Section -->
+            <div>
+                <h4>Trivial Challenge - Question @(questionIndex + 1)</h4>
+                <p>@currentQuestion.Text</p>
 
-                <form asp-action="SubmitAnswer" method="post">
-                    <input type="hidden" name="sessionId" value="@Model.Id">
+                <form asp-action="SubmitTrivia" method="post">
+                    @for (int i = 0; i < currentQuestion.Answers.Count; i++)
+                    {
+                        <input type="radio" name="selectedAnswerId" value="@currentQuestion.Answers[i].Id" />
+                        @currentQuestion.Answers[i].Text
+                        <br />
+                    }
 
-                    <div class="list-group">
-                        @foreach (var answer in question.Answers)
-                        {
-                            <button type="submit" name="answerId" value="@answer.Id" class="list-group-item list-group-item-action">@answer.Text</button>
-                        }
-                    </div>
+                    <input type="hidden" name="sessionId" value="@Model.Id" />
+                    <input type="hidden" name="questionIndex" value="@questionIndex" />
+                    <input type="hidden" name="startTime" value="@startTime" />
+                    <button type="submit" class="btn btn-primary">Submit Answer</button>
                 </form>
-            }
+            </div>
+
+            <script>
+                setTimeout(function () {
+                    window.location.href = '@Url.Action("NextChallenge", new { sessionId = Model.Id })';
+                }, 5000); // 5 seconds time limit
+            </script>
         }
         else if (Model.CurrentChallenge.Type == "Sudoku")
         {
+            <!-- Sudoku Challenge Section -->
             <p>This is a Sudoku challenge. (Sudoku puzzle UI goes here)</p>
+
+            <form asp-action="SubmitSudoku" method="post">
+                <textarea name="solution"></textarea>
+                <input type="hidden" name="sessionId" value="@Model.Id" />
+                <input type="hidden" name="startTime" value="@startTime" />
+                <button type="submit" class="btn btn-primary">Submit Sudoku</button>
+            </form>
         }
         else if (Model.CurrentChallenge.Type == "HighFive")
         {
+            <!-- HighFive Challenge Section -->
             <p>Give @(Model.CurrentChallenge.RequiredHighFives ?? 0) high-fives to pass this challenge!</p>
+
+            <form asp-action="SubmitHighFive" method="post">
+                <input type="hidden" name="sessionId" value="@Model.Id" />
+                <button type="submit" class="btn btn-primary">Give High-Five</button>
+            </form>
         }
     </div>
 </div>

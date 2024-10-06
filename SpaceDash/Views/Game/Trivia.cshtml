@@ -1,0 +1,32 @@
+﻿@model SpaceDash.Models.GameSession
+@{
+    var questionIndex = ViewBag.QuestionIndex ?? 0;
+    var currentQuestion = Model.CurrentChallenge.Questions[questionIndex];
+    var startTime = ViewBag.StartTime;
+}
+
+<div>
+    <h2>Trivial Challenge - Question @questionIndex + 1</h2>
+    <p>@currentQuestion.Text</p>
+
+    <form asp-action="SubmitTrivialAnswer" method="post">
+        @for (int i = 0; i < currentQuestion.Answers.Count; i++)
+        {
+            <input type="radio" name="selectedAnswerId" value="@currentQuestion.Answers[i].Id" />
+            @currentQuestion.Answers[i].Text
+
+            <br />
+        }
+
+        <input type="hidden" name="sessionId" value="@Model.Id" />
+        <input type="hidden" name="questionIndex" value="@questionIndex" />
+        <input type="hidden" name="startTime" value="@startTime" />
+        <button type="submit">Submit Answer</button>
+    </form>
+</div>
+
+<script>
+    setTimeout(function () {
+        window.location.href = '@Url.Action("NextTrivialQuestion", new { sessionId = Model.Id, questionIndex = questionIndex })';
+    }, 5000); // 5 seconds time limit
+</script>

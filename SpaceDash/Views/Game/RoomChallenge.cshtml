@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Challenge</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Room Challenge</h1>
+    <p>Quick! You have 20 seconds to reach Room @ViewBag.RoomNumber!</p>
+    <p>Time remaining: <span id="timer">20</span> seconds</p>
+
+    <form id="roomForm" asp-action="VerifyRoomChallenge" method="post">
+        <input type="hidden" name="sessionId" value="@ViewBag.SessionId" />
+        <input type="hidden" name="roomNumber" value="@ViewBag.RoomNumber" />
+        <button type="submit" id="submitButton">I'm in the room!</button>
+    </form>
+
+    <script>
+        $(document).ready(function () {
+            var timeLeft = 20;
+            var timer = setInterval(function () {
+                timeLeft--;
+                $('#timer').text(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    $('#roomForm').submit();
+                }
+            }, 1000);
+
+            $('#submitButton').click(function (e) {
+                e.preventDefault();
+                clearInterval(timer);
+                $('#roomForm').submit();
+            });
+        });
+    </script>
+</body>
+</html>

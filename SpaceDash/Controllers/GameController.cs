@@ -33,6 +33,38 @@ namespace SpaceDash.Controllers
             return View(gameSession);
         }
 
+        private string GenerateSudokuPuzzle()
+        {
+            Random random = new Random();
+            char[] puzzle = new char[36];
+
+            for (int i = 0; i < puzzle.Length; i++)
+            {
+                puzzle[i] = (random.Next(0, 6) + '1').ToString()[0];
+            }
+
+            return new string(puzzle);
+        }
+
+        private readonly string[] TriviaQuestions = new string[]
+        {
+            "What is the capital of Kenya?",
+            "What is the largest planet in our solar system?",
+            "Who wrote 'Romeo and Juliet'?",
+            "What is the chemical symbol for gold?",
+            "Who was the first president of the United States?",
+            "Which element is needed for combustion?",
+            "What year did World War II end?",
+            "What is the hardest natural substance on Earth?",
+            "What is the tallest mountain in the world?",
+            "Who painted the Mona Lisa?"
+        };
+
+        private readonly string[] TriviaAnswers = new string[]
+        {
+            "Nairobi", "Jupiter", "Shakespeare", "Au", "George Washington",
+            "Oxygen", "1945", "Diamond", "Mount Everest", "Leonardo da Vinci"
+        };
 
         public async Task<IActionResult> Play(int sessionId)
         {
@@ -52,12 +84,19 @@ namespace SpaceDash.Controllers
 
             if (gameSession.CurrentChallenge.Type == "Sudoku")
             {
+                if (string.IsNullOrEmpty(gameSession.CurrentChallenge.SudokuPuzzle))
+                {
+                    gameSession.CurrentChallenge.SudokuPuzzle = GenerateSudokuPuzzle();
+                    gameSession.CurrentChallenge.Solution = gameSession.CurrentChallenge.SudokuPuzzle;
+                    gameSession.CurrentChallenge.TimeLimit = 120;
+                    await _context.SaveChangesAsync();
+                }
+
                 ViewBag.StartTime = DateTime.UtcNow;
             }
 
             return View(gameSession.CurrentChallenge.Type, gameSession);
         }
-
 
         [HttpPost]
         public async Task<IActionResult> SubmitSudoku(int sessionId, string solution, DateTime startTime)
@@ -82,7 +121,16 @@ namespace SpaceDash.Controllers
                     gameSession.TimeReward += 10;
                     gameSession.CurrentChallenge.IsCompleted = true;
                     await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Correct! Proceed to the next device." });
+
+                    // Generate a random room number
+                    Random random = new Random();
+                    int roomNumber = random.Next(1, 6); // Assuming 5 rooms
+
+                    // Store the room number and start time in TempData
+                    TempData["RoomNumber"] = roomNumber;
+                    TempData["RoomChallengeStartTime"] = DateTime.UtcNow.ToString("O");
+
+                    return RedirectToAction(nameof(RoomChallenge), new { sessionId, roomNumber });
                 }
                 else
                 {
@@ -96,35 +144,109 @@ namespace SpaceDash.Controllers
                 return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Incorrect solution. Moving to the next challenge." });
             }
         }
-        public async Task<IActionResult> NextChallenge(int sessionId, string message = null)
+
+        public IActionResult RoomChallenge(int sessionId, int roomNumber)
         {
-            var gameSession = await _context.GameSessions
-                .Include(gs => gs.Challenges)
-                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+            ViewBag.RoomNumber = roomNumber;
+            ViewBag.SessionId = sessionId;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyRoomChallenge(int sessionId, int roomNumber)
+        {
+            if (TempData["RoomNumber"] == null || TempData["RoomChallengeStartTime"] == null)
+            {
+                return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Room challenge data not found. Moving to the next challenge." });
+            }
+
+            int correctRoomNumber = (int)TempData["RoomNumber"];
+            DateTime startTime;
+
+            // Parse the string back to DateTime
+            if (!DateTime.TryParse(TempData["RoomChallengeStartTime"].ToString(), out startTime))
+            {
+                return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Invalid start time. Moving to the next challenge." });
+            }
+
+            DateTime endTime = DateTime.UtcNow;
+
+            var timeTaken = (endTime - startTime).TotalSeconds;
+
+            var gameSession = await _context.GameSessions.FindAsync(sessionId);
 
             if (gameSession == null)
             {
                 return NotFound();
             }
 
-            var nextChallenge = gameSession.Challenges
-                .OrderBy(c => c.Order)
-                .FirstOrDefault(c => !c.IsCompleted);
-
-            if (nextChallenge == null)
+            if (roomNumber == correctRoomNumber && timeTaken <= 20)
             {
-                gameSession.IsCompleted = true;
-                gameSession.EndTime = DateTime.UtcNow;
+                gameSession.Score += 150;
+                gameSession.TimeReward += 15;
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(GameOver), new { sessionId });
+                return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Room challenge completed successfully! Moving to the next challenge." });
+            }
+            else
+            {
+                gameSession.TimeReward -= 10;
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Room challenge failed. Moving to the next challenge." });
+            }
+        }
+
+        public async Task<IActionResult> Trivia(int sessionId, int questionIndex = 0)
+        {
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.CurrentChallenge)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+
+            if (gameSession == null || gameSession.CurrentChallenge.Type != "Trivia")
+            {
+                return NotFound("Trivia challenge not found.");
             }
 
-            gameSession.CurrentChallengeId = nextChallenge.Id;
-            await _context.SaveChangesAsync();
+            if (questionIndex >= TriviaQuestions.Length)
+            {
+                return RedirectToAction(nameof(NextChallenge), new { sessionId });
+            }
 
-            ViewBag.Message = message;
-            return RedirectToAction(nameof(Play), new { sessionId });
+            ViewBag.Question = TriviaQuestions[questionIndex];
+            ViewBag.QuestionIndex = questionIndex;
+            ViewBag.StartTime = DateTime.UtcNow;
+
+            return View(gameSession);
         }
+
+         [HttpPost]
+        public async Task<IActionResult> SubmitTrivia(int sessionId, string answer, int questionIndex, DateTime startTime)
+        {
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.CurrentChallenge)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+
+            if (gameSession == null || gameSession.CurrentChallenge.Type != "Trivia")
+            {
+                return NotFound();
+            }
+
+            var endTime = DateTime.UtcNow;
+            var timeTaken = (endTime - startTime).TotalSeconds;
+
+            if (timeTaken > 5)
+            {
+                return RedirectToAction(nameof(Trivia), new { sessionId, questionIndex = questionIndex + 1 });
+            }
+
+            if (answer?.Trim().Equals(TriviaAnswers[questionIndex], StringComparison.OrdinalIgnoreCase) == true)
+            {
+                gameSession.Score += 50;
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Trivia), new { sessionId, questionIndex = questionIndex + 1 });
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> SubmitHighFive(int sessionId)
@@ -153,7 +275,7 @@ namespace SpaceDash.Controllers
             return View("HighFive", gameSession);
         }
 
-        public async Task<IActionResult> NextChallenge(int sessionId)
+        public async Task<IActionResult> NextChallenge(int sessionId, string message = null)
         {
             var gameSession = await _context.GameSessions
                 .Include(gs => gs.Challenges)
@@ -179,6 +301,7 @@ namespace SpaceDash.Controllers
             gameSession.CurrentChallengeId = nextChallenge.Id;
             await _context.SaveChangesAsync();
 
+            ViewBag.Message = message;
             return RedirectToAction(nameof(Play), new { sessionId });
         }
 

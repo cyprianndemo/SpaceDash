@@ -1,40 +1,160 @@
-﻿@model GameSession
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Challenge</title>
+    <style>
+        body {
+            background-color: #000000; /* Black background to simulate night */
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-<h2>Sudoku Challenge</h2>
+        .container {
+            text-align: center;
+            z-index: 1;
+        }
 
-@if (Model?.CurrentChallenge != null && Model.CurrentChallenge.Type == "Sudoku" && !string.IsNullOrEmpty(Model.CurrentChallenge.SudokuPuzzle))
-{
-    <h3>Solve the 6x6 Sudoku puzzle:</h3>
-    <div id="timer">Time remaining: <span id="time-left"></span></div>
-    <div id="sudoku-grid">
-        @for (int i = 0; i < 6; i++)
+        #sudoku-grid {
+            display: inline-block;
+            padding: 10px;
+            border: 3px solid #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .sudoku-row {
+            margin-bottom: 10px;
+        }
+
+        .sudoku-row input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #999;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #000;
+        }
+
+        .sudoku-row input.fixed-cell {
+            background-color: rgba(200, 200, 200, 0.8);
+            font-weight: bold;
+        }
+
+        .sudoku-row input.editable {
+            background-color: rgba(240, 240, 240, 0.8);
+        }
+
+        .sudoku-row input + input {
+            margin-left: 5px;
+        }
+
+        /* Sun */
+        .sun {
+            position: absolute;
+            bottom: 50px; /* Positioning the sun lower as if it’s setting */
+            left: 50px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffff00, #ff8c00);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ffff00;
+        }
+
+        /* Stars */
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 1s infinite alternate;
+        }
+
+        @@keyframes twinkle {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Shooting star */
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 50px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 100%);
+            transform: rotate(-45deg);
+            animation: shoot 2s linear infinite;
+            opacity: 0;
+        }
+
+        @@keyframes shoot {
+            0% {
+                transform: translateX(0) translateY(0) rotate(-45deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-500px) translateY(500px) rotate(-45deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sun"></div>
+    <div class="container">
+        <h2>Sudoku Challenge</h2>
+
+        @if (Model?.CurrentChallenge != null && Model.CurrentChallenge.Type == "Sudoku" && !string.IsNullOrEmpty(Model.CurrentChallenge.SudokuPuzzle))
         {
-            <div class="sudoku-row">
-                @for (int j = 0; j < 6; j++)
+            <h3 class="mt-4">Solve the 6x6 Sudoku puzzle:</h3>
+            <div id="timer" class="mb-4">Time remaining: <span id="time-left" class="font-weight-bold"></span></div>
+
+            <div id="sudoku-grid">
+                @for (int i = 0; i < 6; i++)
                 {
-                    var index = i * 6 + j;
-                    var value = index < Model.CurrentChallenge.SudokuPuzzle.Length ? Model.CurrentChallenge.SudokuPuzzle[index] : '0';
-                    if (value != '0')
-                    {
-                        <input type="text" maxlength="1" readonly value="@value" />
-                    }
-                    else
-                    {
-                        <input type="text" maxlength="1" class="editable" />
-                    }
+                    <div class="sudoku-row">
+                        @for (int j = 0; j < 6; j++)
+                        {
+                            var index = i * 6 + j;
+                            var value = index < Model.CurrentChallenge.SudokuPuzzle.Length ? Model.CurrentChallenge.SudokuPuzzle[index] : '0';
+                            if (value != '0')
+                            {
+                                <input type="text" maxlength="1" readonly value="@value" class="fixed-cell" />
+                            }
+                            else
+                            {
+                                <input type="text" maxlength="1" class="editable" />
+                            }
+                        }
+                    </div>
                 }
             </div>
+
+            <form asp-action="SubmitSudoku" method="post" id="sudoku-form" class="mt-4">
+                <input type="hidden" name="sessionId" value="@Model.Id" />
+                <input type="hidden" name="solution" id="solution-input" />
+                <input type="hidden" name="startTime" value="@(ViewBag.StartTime?.ToString("o") ?? DateTime.UtcNow.ToString("o"))" />
+                <button type="submit" class="btn btn-primary mt-3">Submit Solution</button>
+            </form>
+        }
+        else
+        {
+            <p>Loading Sudoku challenge...</p>
         }
     </div>
-    <form asp-action="SubmitSudoku" method="post" id="sudoku-form">
-        <input type="hidden" name="sessionId" value="@Model.Id" />
-        <input type="hidden" name="solution" id="solution-input" />
-        <input type="hidden" name="startTime" value="@(ViewBag.StartTime?.ToString("o") ?? DateTime.UtcNow.ToString("o"))" />
-        <button type="submit">Submit Solution</button>
-    </form>
 
     <script>
-        const timeLimit = @(Model.CurrentChallenge.TimeLimit > 0 ? Model.CurrentChallenge.TimeLimit : 120);
+        // Sudoku game logic
+        const timeLimit = @(Model?.CurrentChallenge?.TimeLimit > 0 ? Model.CurrentChallenge.TimeLimit : 120);
         let timeLeft = timeLimit;
         const timerElement = document.getElementById('time-left');
         const form = document.getElementById('sudoku-form');
@@ -61,40 +181,34 @@
             solutionInput.value = solution;
             form.submit();
         });
+
+        // Space background elements
+        function createStars() {
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                document.body.appendChild(star);
+            }
+        }
+
+        function createShootingStar() {
+            const shootingStar = document.createElement('div');
+            shootingStar.className = 'shooting-star';
+            shootingStar.style.top = `${Math.random() * 50}%`;
+            shootingStar.style.left = '100%';
+            document.body.appendChild(shootingStar);
+
+            setTimeout(() => {
+                shootingStar.remove();
+            }, 2000);
+        }
+
+        createStars();
+        setInterval(createShootingStar, 30000);
     </script>
-
-    <style>
-        #sudoku-grid {
-            display: inline-block;
-            border: 2px solid #000;
-        }
-
-        .sudoku-row {
-            display: flex;
-        }
-
-            .sudoku-row input {
-                width: 40px;
-                height: 40px;
-                text-align: center;
-                font-size: 20px;
-                border: 1px solid #999;
-            }
-
-                .sudoku-row input:nth-child(2n) {
-                    border-right: 2px solid #000;
-                }
-
-            .sudoku-row:nth-child(2n) input {
-                border-bottom: 2px solid #000;
-            }
-
-            .sudoku-row input.editable {
-                background-color: #f0f0f0;
-            }
-    </style>
-}
-else
-{
-    <p>Error: Current challenge is not a valid Sudoku challenge or the puzzle is not set.</p>
-}
+</body>
+</html>
