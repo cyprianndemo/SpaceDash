@@ -33,6 +33,7 @@ namespace SpaceDash.Controllers
             return View(gameSession);
         }
 
+
         public async Task<IActionResult> Play(int sessionId)
         {
             var gameSession = await _context.GameSessions
@@ -49,19 +50,17 @@ namespace SpaceDash.Controllers
                 return RedirectToAction(nameof(NextChallenge), new { sessionId });
             }
 
-            switch (gameSession.CurrentChallenge.Type)
+            if (gameSession.CurrentChallenge.Type == "Sudoku")
             {
-                case "Sudoku":
-                    return View("Sudoku", gameSession);
-                case "HighFive":
-                    return View("HighFive", gameSession);
-                default:
-                    return NotFound("Unknown challenge type.");
+                ViewBag.StartTime = DateTime.UtcNow;
             }
+
+            return View(gameSession.CurrentChallenge.Type, gameSession);
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> SubmitSudoku(int sessionId, string solution)
+        public async Task<IActionResult> SubmitSudoku(int sessionId, string solution, DateTime startTime)
         {
             var gameSession = await _context.GameSessions
                 .Include(gs => gs.CurrentChallenge)
@@ -72,16 +71,59 @@ namespace SpaceDash.Controllers
                 return NotFound();
             }
 
+            var endTime = DateTime.UtcNow;
+            var timeTaken = (endTime - startTime).TotalSeconds;
+
             if (solution == gameSession.CurrentChallenge.Solution)
             {
-                gameSession.Score += 100;
-                gameSession.TimeReward += 30;
-                gameSession.CurrentChallenge.IsCompleted = true;
+                if (timeTaken <= gameSession.CurrentChallenge.TimeLimit)
+                {
+                    gameSession.Score += 100;
+                    gameSession.TimeReward += 10;
+                    gameSession.CurrentChallenge.IsCompleted = true;
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Correct! Proceed to the next device." });
+                }
+                else
+                {
+                    return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Time's up! Moving to the next challenge." });
+                }
+            }
+            else
+            {
+                gameSession.TimeReward -= 5;
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(NextChallenge), new { sessionId });
+                return RedirectToAction(nameof(NextChallenge), new { sessionId, message = "Incorrect solution. Moving to the next challenge." });
+            }
+        }
+        public async Task<IActionResult> NextChallenge(int sessionId, string message = null)
+        {
+            var gameSession = await _context.GameSessions
+                .Include(gs => gs.Challenges)
+                .FirstOrDefaultAsync(gs => gs.Id == sessionId);
+
+            if (gameSession == null)
+            {
+                return NotFound();
             }
 
-            return View("Sudoku", gameSession);
+            var nextChallenge = gameSession.Challenges
+                .OrderBy(c => c.Order)
+                .FirstOrDefault(c => !c.IsCompleted);
+
+            if (nextChallenge == null)
+            {
+                gameSession.IsCompleted = true;
+                gameSession.EndTime = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(GameOver), new { sessionId });
+            }
+
+            gameSession.CurrentChallengeId = nextChallenge.Id;
+            await _context.SaveChangesAsync();
+
+            ViewBag.Message = message;
+            return RedirectToAction(nameof(Play), new { sessionId });
         }
 
         [HttpPost]

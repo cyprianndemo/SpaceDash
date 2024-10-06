@@ -32,23 +32,95 @@
                 <h2>Create Your SpaceDash Team</h2>
             </div>
             <div class="card-body">
-                <form asp-controller="Team" asp-action="Create" method="post">
-                    <div class="form-group">
-                        <label for="teamName">Team Name:</label>
-                        <input type="text" class="form-control" id="teamName" name="teamName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="gamePin">Game Pin (optional):</label>
-                        <input type="text" class="form-control" id="gamePin" name="gamePin">
-                        <small class="form-text text-muted">Leave blank to generate a random pin.</small>
-                    </div>
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">Create Team</button>
-                    </div>
-                </form>
+                <!-- Container for dynamically adding forms -->
+                <div id="teamFormsContainer">
+                    <form asp-controller="Team" asp-action="Create" method="post" class="team-form">
+                        <div class="form-group">
+                            <label for="teamName">Team Name:</label>
+                            <input type="text" class="form-control team-name" id="teamName" name="teamName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gamePin">Game Pin (optional):</label>
+                            <input type="text" class="form-control" id="gamePin" name="gamePin">
+                            <small class="form-text text-muted">Leave blank to generate a random pin.</small>
+                        </div>
+                        <hr />
+                    </form>
+                </div>
+
+                <!-- Buttons Section -->
+                <div class="text-center mt-4">
+                    <!-- Add another team button -->
+                    <button id="addTeamBtn" class="btn btn-secondary">Create Another Team</button>
+                    <!-- Reset button to bring the form back to a single one -->
+                    <button id="resetBtn" class="btn btn-warning">Reset</button>
+                </div>
+
+                <!-- Button to submit all teams -->
+                <div class="text-center mt-4">
+                    <button id="submitTeamsBtn" class="btn btn-primary">Create Teams</button>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to check if the team name is filled
+        function isTeamNameFilled(form) {
+            var teamNameInput = form.querySelector(".team-name");
+            return teamNameInput && teamNameInput.value.trim() !== "";
+        }
+
+        // JavaScript to dynamically add team forms
+        document.getElementById("addTeamBtn").addEventListener("click", function (e) {
+            e.preventDefault();
+
+            var currentForms = document.querySelectorAll(".team-form");
+            var lastForm = currentForms[currentForms.length - 1];
+
+            // Check if the last form has its team name filled
+            if (!isTeamNameFilled(lastForm)) {
+                alert("Please fill in the team name before adding another team.");
+                return;
+            }
+
+            // Clone the first team form
+            var originalForm = document.querySelector(".team-form");
+            var newForm = originalForm.cloneNode(true);
+
+            // Reset the form fields in the new form
+            newForm.querySelectorAll("input").forEach(function (input) {
+                input.value = "";
+            });
+
+            // Append the new form to the container
+            document.getElementById("teamFormsContainer").appendChild(newForm);
+        });
+
+        // Reset button to clear all forms except the first one
+        document.getElementById("resetBtn").addEventListener("click", function () {
+            var formsContainer = document.getElementById("teamFormsContainer");
+            var firstForm = formsContainer.querySelector(".team-form");
+
+            // Clear all forms except the first one
+            formsContainer.innerHTML = "";
+            formsContainer.appendChild(firstForm);
+
+            // Reset the first form
+            firstForm.querySelectorAll("input").forEach(function (input) {
+                input.value = "";
+            });
+        });
+
+        // Submit all team forms
+        document.getElementById("submitTeamsBtn").addEventListener("click", function () {
+            var forms = document.querySelectorAll(".team-form");
+
+            forms.forEach(function (form) {
+                form.submit();
+            });
+        });
+    </script>
 </body>
 </html>

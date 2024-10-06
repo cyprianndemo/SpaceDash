@@ -21,4 +21,6 @@ public class Challenge
     // Properties for Sudoku challenges
     public string? SudokuPuzzle { get; set; }
     public string? Solution { get; set; }
+    public int TimeLimit { get; set; }
+
 }

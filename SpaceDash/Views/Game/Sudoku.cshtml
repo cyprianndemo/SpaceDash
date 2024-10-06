@@ -2,22 +2,99 @@
 
 <h2>Sudoku Challenge</h2>
 
-@if (Model.CurrentChallenge != null && Model.CurrentChallenge.Type == "Sudoku")
+@if (Model?.CurrentChallenge != null && Model.CurrentChallenge.Type == "Sudoku" && !string.IsNullOrEmpty(Model.CurrentChallenge.SudokuPuzzle))
 {
-    <h3>Solve the Sudoku puzzle:</h3>
-
-    <div>
-        <!-- Display the Sudoku puzzle here -->
-        @Model.CurrentChallenge.SudokuPuzzle
+    <h3>Solve the 6x6 Sudoku puzzle:</h3>
+    <div id="timer">Time remaining: <span id="time-left"></span></div>
+    <div id="sudoku-grid">
+        @for (int i = 0; i < 6; i++)
+        {
+            <div class="sudoku-row">
+                @for (int j = 0; j < 6; j++)
+                {
+                    var index = i * 6 + j;
+                    var value = index < Model.CurrentChallenge.SudokuPuzzle.Length ? Model.CurrentChallenge.SudokuPuzzle[index] : '0';
+                    if (value != '0')
+                    {
+                        <input type="text" maxlength="1" readonly value="@value" />
+                    }
+                    else
+                    {
+                        <input type="text" maxlength="1" class="editable" />
+                    }
+                }
+            </div>
+        }
     </div>
-
-    <form asp-action="SubmitSudoku" method="post">
+    <form asp-action="SubmitSudoku" method="post" id="sudoku-form">
         <input type="hidden" name="sessionId" value="@Model.Id" />
-        <textarea name="solution" rows="9" cols="9" placeholder="Enter your solution here"></textarea>
+        <input type="hidden" name="solution" id="solution-input" />
+        <input type="hidden" name="startTime" value="@(ViewBag.StartTime?.ToString("o") ?? DateTime.UtcNow.ToString("o"))" />
         <button type="submit">Submit Solution</button>
     </form>
+
+    <script>
+        const timeLimit = @(Model.CurrentChallenge.TimeLimit > 0 ? Model.CurrentChallenge.TimeLimit : 120);
+        let timeLeft = timeLimit;
+        const timerElement = document.getElementById('time-left');
+        const form = document.getElementById('sudoku-form');
+        const solutionInput = document.getElementById('solution-input');
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                form.submit();
+            }
+            timeLeft--;
+        }
+
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputs = document.querySelectorAll('#sudoku-grid input');
+            const solution = Array.from(inputs).map(input => input.value || '0').join('');
+            solutionInput.value = solution;
+            form.submit();
+        });
+    </script>
+
+    <style>
+        #sudoku-grid {
+            display: inline-block;
+            border: 2px solid #000;
+        }
+
+        .sudoku-row {
+            display: flex;
+        }
+
+            .sudoku-row input {
+                width: 40px;
+                height: 40px;
+                text-align: center;
+                font-size: 20px;
+                border: 1px solid #999;
+            }
+
+                .sudoku-row input:nth-child(2n) {
+                    border-right: 2px solid #000;
+                }
+
+            .sudoku-row:nth-child(2n) input {
+                border-bottom: 2px solid #000;
+            }
+
+            .sudoku-row input.editable {
+                background-color: #f0f0f0;
+            }
+    </style>
 }
 else
 {
-    <p>Error: Current challenge is not a Sudoku challenge.</p>
+    <p>Error: Current challenge is not a valid Sudoku challenge or the puzzle is not set.</p>
 }
